@@ -1,7 +1,7 @@
 import base64
 import requests
 from tkinter.filedialog import askopenfilenames
-url = 'http://127.0.0.1:7861/loraapi/v1/training'
+url = 'https://7155bee98293b932fe.gradio.live/loraapi/v1/training'
 
 def send_train_request(image_paths):
     images = []

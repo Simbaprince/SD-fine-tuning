@@ -7,7 +7,7 @@ from library.dreambooth_folder_creation_gui import dreambooth_folder_preparation
 from typing import List
 from modules import errors
 from modules.api import models
-
+from threading import Lock
 from lora_gui import train_model
 import os
 import base64
@@ -67,9 +67,10 @@ def api_middleware(app: FastAPI):
 
 
 class Api:
-    def __init__(self, app: FastAPI):
+    def __init__(self, app: FastAPI, queue_lock: Lock):
         self.router = APIRouter()
         self.app = app
+        self.queue_lock = queue_lock
         api_middleware(self.app)
 
         self.add_api_route("/loraapi/v1/training", self.create_train,
@@ -268,22 +269,15 @@ class Api:
     async def create_train(self, request: Request):
         base_dir = os.path.abspath(os.curdir)
 
-        # Generate a unique ID for this training process
         train_id = str(uuid.uuid4())
 
         data = await request.json()
 
-        # Extract the train_images
         train_images = data.get('train_images', [])
-
-        # Specify the directory where you want to save the images
-
         save_dir = os.path.join(base_dir, 'train_images', train_id)
 
-        # Ensure the directory exists
         os.makedirs(save_dir, exist_ok=True)
 
-        # Save the base64 images as files
         for i, img_base64 in enumerate(train_images):
             img_data = base64.b64decode(img_base64)
             img_path = os.path.join(save_dir, f'image_{i}.jpg')
